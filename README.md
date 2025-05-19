@@ -1,5 +1,6 @@
 # A unified deep learning framework for high-performance RUL prediction in user-behavior batteries
 
+Research Paper: []
 Data Access: [https://data.mendeley.com/my-data/](https://doi.org/10.17632/npjy7vdgky.1)
 
 Each of the four neural network based models is trained individually using the selected features. The prediction of RUL is performed at every cycle using historical data accumulated over previous $L$ cycles, where $L$ represents the sliding sequence length for estimating the remaining life at the next cycle. For example, if a battery has a total lifespan of 500 cycles, and the remaining life is to be estimated at the $20^{th}$ cycle, the goal is to accurately predict a value of 480 using data from the $10^{th}$ to the $19^{th}$ cycles when $L$ is set to 10. A smaller $L$ value poses a greater challenge, as the prediction must be based on limited data. To balance this, $L$ was set to 10 in the main experiments, ensuring a reliable demonstration of our framework's performance.
