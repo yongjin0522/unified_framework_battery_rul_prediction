@@ -36,6 +36,10 @@ def run_experiment_mlp(iteration, num_selected, seed):
 
     loss_train_list = []
     ####################
+    loaded_train_data = load_all_datasets(train_list, data_path, num_selected, seq_length, rul_factor)
+    loaded_test_data = load_all_datasets(test_list, data_path, num_selected, seq_length, rul_factor)
+    ####################
+
     print(f"[MLP] Experiment {iteration} started.")
 
     results_filename = os.path.join(result_path, f"results_MLP.txt")
@@ -58,13 +62,7 @@ def run_experiment_mlp(iteration, num_selected, seed):
         random.shuffle(train_list)
         epoch_loss = 0.0
 
-        for data_name in train_list:
-            data = torch.load(data_path + data_name)
-
-            x = data[:, num_selected]
-            y = data[:, -1][:, None] / rul_factor  # RUL
-
-            train_x, train_y = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
+        for data_name, train_x, train_y in loaded_train_data:
 
             loss = model.loss(train_x, train_y)
             optimizer.zero_grad()
@@ -79,13 +77,8 @@ def run_experiment_mlp(iteration, num_selected, seed):
             rmse_scores_train_tmp = []
 
             ############## Train Files ##############
-            for data_name in train_list:
-                data = torch.load(data_path + data_name)
+            for data_name, train_x, train_y in loaded_train_data:
 
-                x = data[:, num_selected]
-                y = data[:, -1][:, None]  # RUL
-
-                train_x, train_y = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
                 y_true_tmp, y_pred_tmp = [], []
 
                 with torch.no_grad():
@@ -119,13 +112,8 @@ def run_experiment_mlp(iteration, num_selected, seed):
     # Evaluating the model
     model = torch.load(model_path + model_name)
 
-    for file_name in test_list:
-        test_data = torch.load(data_path + file_name)
+    for file_name, test_x, test_y in loaded_test_data:
 
-        x = test_data[:, num_selected]
-        y = test_data[:, -1][:, None]  # RUL
-
-        test_x, test_y = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
         y_true, y_pred = [], []
         model.eval()
 
