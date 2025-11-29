@@ -41,6 +41,11 @@ for iteration in range(100):
     seq_length = 10
     train_list, test_list = train_test_split(data_list, test_size=0.2, random_state=seed)
 
+    ####################
+    loaded_train_data = load_all_datasets(train_list, data_path, num_selected, seq_length, rul_factor)
+    loaded_test_data = load_all_datasets(test_list, data_path, num_selected, seq_length, rul_factor)
+    ####################
+
     model_mlp = torch.load(model_path + f"mlp_{iteration}")
     model_gru = torch.load(model_path + f"gru_{iteration}")
     model_lstm = torch.load(model_path + f"lstm_{iteration}")
@@ -48,16 +53,9 @@ for iteration in range(100):
 
     for epoch in range(num_epochs):
 
-        for file_name in train_list:
-            train_data = torch.load(data_path + file_name)
+        for data_name, train_x, train_y in loaded_train_data:
 
-            x = train_data[:, num_selected]
-            y = train_data[:, -1][:, None] / rul_factor  # RUL
-
-            train_x, train_y = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
             y_true, y_pred = [], []
-
-            cycle = train_data[seq_length:, 0]
 
             y_mlp = model_mlp(train_x)
             y_gru = model_gru(train_x)
@@ -85,17 +83,11 @@ for iteration in range(100):
             r2_scores_test_tmp = []
 
             # Intermediate Test
-            for file_name in test_list:
-                test_data = torch.load(data_path + file_name)
+            for file_name, test_x, test_y in loaded_test_data:
 
-                x = test_data[:, num_selected]
-                y = test_data[:, -1][:, None]  # RUL
-
-                test_x, test_y = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
                 y_true_tmp, y_pred_tmp = [], []
 
                 with torch.no_grad():
-                    cycle = test_data[seq_length:, 0]
 
                     y_mlp = model_mlp(test_x) * rul_factor
                     y_gru = model_gru(test_x) * rul_factor
@@ -135,13 +127,8 @@ for iteration in range(100):
     loss_transformer = 0
     loss_ensemble = 0
 
-    for file_name in train_list:
-        train_data = torch.load(data_path + file_name)
+    for data_name, train_x, train_y in loaded_train_data:
 
-        x = train_data[:, num_selected]
-        y = train_data[:, -1][:, None] / rul_factor  # RUL
-
-        train_x, train_y = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
         y_true, y_pred_ensemble, y_pred_mlp, y_pred_gru, y_pred_lstm, y_pred_transformer = [], [], [], [], [], []
 
         with torch.no_grad():
@@ -199,17 +186,11 @@ for iteration in range(100):
     #######################################################################################
 
     # Test the Ensemble
-    for file_name in test_list:
-        test_data = torch.load(data_path + file_name)
+    for file_name, test_x, test_y in loaded_test_data:
 
-        x = test_data[:, num_selected]
-        y = test_data[:, -1][:, None]  # RUL
-
-        test_x, test_y = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
         y_true, y_pred = [], []
 
         with torch.no_grad():
-            cycle = test_data[seq_length:, 0]
 
             y_mlp = model_mlp(test_x) * rul_factor
             y_gru = model_gru(test_x) * rul_factor
