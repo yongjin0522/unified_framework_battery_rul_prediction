@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import random
+import os
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -34,3 +35,23 @@ def generate_randomness(max_num_features, num_features):
 
     return num_selected, seed
 
+
+def load_all_datasets(data_list, data_path, num_selected, seq_length, rul_factor):
+    loaded_data_list = []
+
+    for data_name in data_list:
+        data = torch.load(os.path.join(data_path, data_name))
+
+        x = data[:, num_selected]
+        y = data[:, -1][:, None] / rul_factor
+
+        train_x_np, train_y_np = build_dataset(x.detach().numpy(), y.detach().numpy(), seq_length)
+
+        train_x = torch.FloatTensor(train_x_np).to(device)
+        train_y = torch.FloatTensor(train_y_np).to(device)
+
+        loaded_data_list.append((data_name, train_x, train_y))
+
+    print("Data loading complete.")
+
+    return loaded_data_list
